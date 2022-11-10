@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student</title>
+</head>
+<body>
+    <h2>Add Student</h2>
+    <form method="post" action="/addStudent">
+<fieldset>
+    <legend>Student Information</legend>
+    <div>
+        <label for="name">Student Name:</label>
+        <input id="name" name="name" type="text">
+    </div>
+    <div>
+        <label for="program">Program:</label>
+        <select name="program" id="program">
+            <option value="BSD">BSD</option>
+            <option value="CPA">CPA</option>
+            <option value="DSA">DSA</option>
+        </select>
+    </div>
+    <div>
+        <label for="gpa">GPA:</label>
+        <input id="gpa" name="gpa" type="text">
+    </div>
+    
+<input type="submit" value="Add Student">
+<input type="reset" value="Reset">
+</fieldset>
+
+    </form>
+
+    
+</body>
+</html>

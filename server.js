@@ -1,28 +1,57 @@
+//cyclic: https://poised-pear-toga.cyclic.app/
 const express = require("express");
 const app = new express();
 const path = require("path");
 var HTTP_PORT = process.env.PORT || 8080;
 var data_prep = require("./data_prep.js");
+const exphbs = require("express-handlebars");
+
+app.engine(".hbs", exphbs.engine({
+    extname: ".hbs",
+    defaultLayout: "main"
+}));
+app.set("view engine", ".hbs");
+
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+app.use(express.static("public"));
 
 var on_http = function(){
     console.log("Express http server listening on " + HTTP_PORT);
 }
 
 app.get("/", (req, res)=>{
-    let resText = `<h2>Declaration</h2><p>I acknowledge the College's academic intergrity policy - and my own intergrity - remain in effect whether my work is done remotely or onsite. Any test or assignment is an act of trust between me and my instructor, and especially with my classmates... even when no one is watching. I declare I will not break that trust.</p><p>Name: <span style="background-color: yellow;">Kevin Timachy</span></p><p>Student Number: <span style="background-color: yellow;">145075180</span></p><p><a href="/CPA">Click to visit CPA Students</a></p><p><a href="/highGPA">Click to see who has the highest GPA</a></p>`;
-    res.send(resText);
+    res.render("home");
 });
 
 app.get("/CPA", (req, res) => {
-    data_prep.cpa().then(result => { res.json(result); }).catch(err => { console.log(err); });
+    data_prep.cpa().then(result => { res.render("students", { students: result });}).catch(err => { console.log(err); });
 });  
 
 app.get("/highGPA", (req, res) => {
     data_prep.highGPA().then(result => {
-        data = JSON.stringify(result);
-        let text = `<h2>Highest GPA:</h2><p>Student ID: ${JSON.stringify(result.studId)}</p><p>Name: ${result.name}</p><p>Program: ${result.program}</p><p>GPA: ${JSON.stringify(result.gpa)}</p>`;
-        res.send(text);
+        res.render("student", { student: result });
     }).catch(err => { console.log(err); });
+});
+
+app.get("/allStudents", (req, res) => {
+    data_prep.allStudents().then(result => { res.render("students", { students: result }); }).catch(err => { console.log(err); });
+});  
+
+app.get("/addStudent", (req, res) => {
+    res.sendFile(path.join(__dirname, "/views/addStudent.html"));
+});  
+
+app.post("/addStudent", (req, res) => {
+    data_prep.addStudent(req.body).then(result => {
+        res.render("student", {student: req.body})
+    }).catch(err => res.json(err));
+    
+});
+
+app.get("/student/:studId", (req, res) => {
+    data_prep.getStudent(req.params.studId).then(result => { res.render("student", {student: result})
+    }).catch(err => res.json({ message: "no result found" }));
 });
 
 app.use((req,res)=>{
