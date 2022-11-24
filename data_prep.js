@@ -1,45 +1,71 @@
-const fs = require('fs');
-var students = [];
+const Sequelize = require('sequelize');
+
+var sequelize = new Sequelize('kywvqaem', 'kywvqaem', 'sDw5Y0OPcqfhfmJORWDNs5yEaVOnZ21l', {
+    host: 'peanut.db.elephantsql.com',
+    dialect: 'postgres',
+    port: 5432,
+    dialectOptions: {
+        ssl: { rejectUnauthorized: false }
+    },
+    query: { raw: true }
+});
+
+sequelize
+    .authenticate()
+    .then(function() {
+        console.log('Connection has been established successfully.');
+    })
+    .catch(function(err) {
+        console.log('Unable to connect to the database:', err);
+    });
+
+var Student = sequelize.define('Student', {
+    studId: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    name: Sequelize.STRING,
+    program: Sequelize.STRING,
+    gpa: Sequelize.FLOAT
+});
 
 exports.prep = function () {
     return new Promise((resolve, reject) =>
     {
-        fs.readFile("./students.json", (err, data) => {
-            if (err) {
-                reject("unable to read file");
-            }
-            else{
-                resolve();
-                students = JSON.parse(data);
-            }
-        });
+        sequelize.sync()
+            .then(() => resolve())
+            .catch(() => reject("unable to sync the database"));
     });
 }
 
 exports.cpa = function () {
     return new Promise((resolve, reject) =>
     {
-        var cpaStudents = students.filter(stud => stud.program == "CPA");
-        if (cpaStudents.length == 0)
-            reject("no results returned");
-        else if (cpaStudents.length > 0)
-            resolve(cpaStudents);
+        Student.findAll({
+            where: {
+                program: "CPA"
+            }
+        })
+            .then((data)=> resolve(data))
+            .catch(() => reject("no results returned"));
     });
 }
 
 exports.highGPA = function () {
-    let bestStudent = students[0];
-    for (let index = 0; index < students.length; index++) {
-        if (students[index].gpa > bestStudent.gpa) {
-            bestStudent = students[index];
-        }
-    }
     return new Promise((resolve, reject) =>
     {
-        if (bestStudent)
-            resolve(bestStudent);
-        else
-            reject("Failed finding the student with the highest GPA");
+        Student.findAll({})
+            .then((students) => {
+                let bestStudent = students[0];
+                for (let index = 0; index < students.length; index++) {
+                    if (students[index].gpa > bestStudent.gpa) {
+                        bestStudent = students[index];
+                    }
+                }
+                resolve(bestStudent);
+            })
+            .catch(() => reject("no results returned"));
     });
 }
 
@@ -47,26 +73,23 @@ exports.allStudents = function ()
 {
     return new Promise((resolve, reject) =>
     {
-        if (students.length == 0)
-            reject("no results returned");
-        else if (students.length > 0)
-            resolve(students);
+        Student.findAll({})
+            .then((data) => resolve(data))
+            .catch(() => reject("no results returned"));
     });
 }
 
 exports.addStudent = function (studentData)
 {
-    studentData.studId = parseInt(studentData.studId);
-    studentData.gpa = parseFloat(studentData.gpa);
-    studentData.studId = students.length + 1;
     return new Promise((resolve, reject) => {
-        if (studentData) {
-            students.push(studentData);
-            resolve();
+        for (const key in studentData) {
+            if (studentData[key]== '') {
+                studentData[key] = null;
+            }
         }
-        else
-            reject();
-        
+        Student.create(studentData)
+            .then(() => resolve())
+            .catch(() => reject("unable to add the student"));
     });
 }
 
