@@ -1,4 +1,4 @@
-//cyclic: https://poised-pear-toga.cyclic.app/
+//cyclic: 
 
 const express = require("express");
 const app = new express();
